@@ -6,16 +6,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="toolClass.fs" />
-        <Compile Include="Chimp.fs" />
-        <Compile Include="Gorilla.fs" />
-        <Compile Include="HelperFunc.fs" />
-        <Compile Include="Dataset.fs" />
-        <Compile Include="Program.fs" />
+        <Compile Include="toolClass.fs"/>
+        <Compile Include="Chimp.fs"/>
+        <Compile Include="Gorilla.fs"/>
+        <Compile Include="AFC.fs"/>
+        <Compile Include="HelperFunc.fs"/>
+        <Compile Include="Dataset.fs"/>
+        <Compile Include="betterCompress.fs"/>
+        <Compile Include="Program.fs"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.1"/>
     </ItemGroup>
 
 </Project>
