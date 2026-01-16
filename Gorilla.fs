@@ -5,7 +5,7 @@ open Compress.toolClass
 
 
 /// 压缩 double 数组
-let compress (data: double[]) : byte[] =
+let compress (data: double[]) : uint64[] =
     if data.Length = 0 then
         invalidArg "data" "empty input"
 
@@ -64,7 +64,7 @@ let compress (data: double[]) : byte[] =
 
 
 /// 解压缩
-let decompress (bytes: byte[]) (length: int) : double[] =
+let decompress (bytes: uint64[]) (length: int) : double[] =
     if length = 0 then
         invalidArg "length" "zero length"
 

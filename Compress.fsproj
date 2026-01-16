@@ -12,7 +12,7 @@
         <Compile Include="AFC.fs"/>
         <Compile Include="HelperFunc.fs"/>
         <Compile Include="Dataset.fs"/>
-        <Compile Include="betterCompress.fs"/>
+        <Compile Include="FASC.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
 

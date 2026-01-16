@@ -45,7 +45,7 @@ module BitUtil =
 // CHIMP Compression Algorithm
 // =======================================================
 
-let compress (values: double[]) : byte[] =
+let compress (values: double[]) : uint64[] =
     if values = null || values.Length = 0 then
         raise (ArgumentException("values"))
 
@@ -106,7 +106,7 @@ let compress (values: double[]) : byte[] =
 // CHIMP Decompression Algorithm
 // =======================================================
 
-let decompress (data: byte[]) (count: int) : double[] =
+let decompress (data: uint64[]) (count: int) : double[] =
     if data = null || data.Length = 0 then
         raise (ArgumentException("Compressed data cannot be null or empty"))
 

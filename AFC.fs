@@ -5,6 +5,7 @@ open toolClass
 type PDFCM() =
     let predictTable = Array.zeroCreate(256)
     let mutable prev = 0.0
+    let mutable prevNum = 0UL
     let mutable hash = 0
     let lowWordMask = 0xFFFFFFFFFFFFFUL
     let highWordMask = 0xFFF0000000000000UL
@@ -13,16 +14,14 @@ type PDFCM() =
         let deltaHighWord = deltaNum >>> 40
         hash <- ((hash <<< 2) ^^^ (int)(deltaHighWord &&& 0xFFUL)) &&& 0xFF
     
-    member this.update(valueNum: uint64) =
-        let value = BitUtil.u2d valueNum
+    member this.update(value:double)(valueNum: uint64) =
         let actualDelta = value - prev
         predictTable[hash] <- actualDelta
         updateHash(actualDelta)
         prev <- value
-        
+        prevNum <- valueNum
 
     member this.predict() =
-        let prevNum = BitUtil.d2u prev
         let highWord = prevNum &&& highWordMask
         let predictDelta = predictTable[hash]
         let predict = prev + predictDelta
@@ -30,11 +29,11 @@ type PDFCM() =
         let result = highWord + (predictNum &&& lowWordMask)
         result
 
-let compress (values: double[]) : byte[] =
+let compress (values: double[]) : uint64[] =
     let w = BitWriter()
     let p = PDFCM()
     let first = BitUtil.d2u values[0]
-    p.update (first)
+    p.update values[0] first
     w.WriteBits(first, 64)
     let mutable prev = first
 
@@ -118,17 +117,17 @@ let compress (values: double[]) : byte[] =
                     w.WriteBits(value, 64)
 
         prev <- value
-        p.update (value)
+        p.update values[i] (value)
 
     w.ToArray()
 
-let decompress (data: byte[]) (count: int) : double[] =
+let decompress (data: uint64[]) (count: int) : double[] =
     let r = BitReader(data)
     let p = PDFCM()
     let result = Array.zeroCreate (count)
     let mutable prev = r.ReadBits(64)
     result[0] <- BitUtil.u2d (prev)
-    p.update (prev)
+    p.update result[0] prev
 
     for i = 1 to count - 1 do
         let isSame = r.ReadBit() = 0
@@ -170,8 +169,8 @@ let decompress (data: byte[]) (count: int) : double[] =
                                 let value = (r.ReadBits((int) validByte * 8)) <<< ((int) tzByte * 8)
                                 value ^^^ preNum
 
-        p.update (value)
         result[i] <- BitUtil.u2d value
+        p.update result[i] value
         prev <- value
 
     result

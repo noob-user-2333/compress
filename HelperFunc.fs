@@ -18,8 +18,8 @@ let bytesToArraySpan (bytes: byte[]) : 'T[] =
     Span.ToArray()
 
 let compressTest
-    (compress: double array -> byte array)
-    (decompress: byte array -> int -> double array)
+    (compress: double array -> uint64 array)
+    (decompress: uint64 array -> int -> double array)
     (compressData: double array)
     =
     let oriSize = compressData.Length * 8
@@ -28,19 +28,20 @@ let compressTest
     let compressedData = compress compressData
     stopwatch.Stop()
     let compressTimeMs = stopwatch.ElapsedMilliseconds
+    let compressedSize = compressedData.Length * 8
     //统计解压耗时
     stopwatch.Restart()
     let data = decompress compressedData compressData.Length
     stopwatch.Stop()
     let decompressTimeMs = stopwatch.ElapsedMilliseconds
-
+    
     for i = 0 to data.Length - 1 do
         if data[i] <> compressData[i] then
             raise (Exception($"压缩算法存在问题,在解压第{i}个数据时出现错误"))
 
     Console.WriteLine($"共压缩{compressData.Length}个数据点")
-    Console.WriteLine($"初始数据大小为{oriSize},压缩后大小为{compressedData.Length}")
-    Console.WriteLine($"压缩率为{(double) (compressedData.Length) / (double) oriSize}")
+    Console.WriteLine($"初始数据大小为{oriSize},压缩后大小为{compressedSize}")
+    Console.WriteLine($"压缩率为{(double) (compressedSize) / (double) oriSize}")
     printfn "压缩耗时: %d ms     解压耗时: %d ms" compressTimeMs decompressTimeMs
     Console.WriteLine()
 
