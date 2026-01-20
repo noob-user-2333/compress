@@ -12,6 +12,8 @@
         <Compile Include="AFC.fs"/>
         <Compile Include="HelperFunc.fs"/>
         <Compile Include="Dataset.fs"/>
+        <Compile Include="Algorithm.fs" />
+        <Compile Include="tANS.fs" />
         <Compile Include="FASC.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
