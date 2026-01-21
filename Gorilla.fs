@@ -5,11 +5,10 @@ open Compress.toolClass
 
 
 /// 压缩 double 数组
-let compress (data: double[]) : uint64[] =
+let compress (writer:BitWriter)(data: double[]) : uint64[] =
     if data.Length = 0 then
         invalidArg "data" "empty input"
 
-    let writer = BitWriter()
 
     // 写入第一个值（完整 64 bit）
     let first = BitConverter.DoubleToUInt64Bits(data[0])

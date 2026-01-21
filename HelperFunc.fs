@@ -4,6 +4,7 @@ open System
 open System.Diagnostics
 open System.IO
 open System.Runtime.InteropServices
+open Compress.toolClass
 
 let writeArrayToFile (filePath: string) (data: double array) =
     use writer = new BinaryWriter(File.Open(filePath, FileMode.Create))
@@ -18,14 +19,15 @@ let bytesToArraySpan (bytes: byte[]) : 'T[] =
     Span.ToArray()
 
 let compressTest
-    (compress: double array -> uint64 array)
+    (compress: BitWriter -> double array -> uint64 array)
     (decompress: uint64 array -> int -> double array)
     (compressData: double array)
     =
     let oriSize = compressData.Length * 8
+    let w = BitWriter()
     //统计压缩耗时
     let stopwatch = Stopwatch.StartNew()
-    let compressedData = compress compressData
+    let compressedData = compress w compressData
     stopwatch.Stop()
     let compressTimeMs = stopwatch.ElapsedMilliseconds
     let compressedSize = compressedData.Length * 8

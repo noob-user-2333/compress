@@ -10,6 +10,7 @@ let defaultDataFile = "/dev/shm/data"
 let binaryData = File.ReadAllBytes defaultDataFile
 let doubleData = bytesToArraySpan<double> binaryData
 let data = doubleData[0..]
+
 HelperFunc.compressTest AFC.compress AFC.decompress data
 HelperFunc.compressTest Chimp.compress Chimp.decompress data
 HelperFunc.compressTest Gorilla.compress Gorilla.decompress data
