@@ -3,21 +3,22 @@ module Compress.AFC
 open toolClass
 
 type PDFCM() =
-    let predictTable = Array.zeroCreate(256)
+    let predictTable = Array.zeroCreate (256)
     let mutable prev = 0.0
     let mutable prevNum = 0UL
     let mutable hash = 0
     let lowWordMask = 0xFFFFFFFFFFFFFUL
     let highWordMask = 0xFFF0000000000000UL
-    let updateHash(delta:double) = 
+
+    let updateHash (delta: double) =
         let deltaNum = BitUtil.d2u delta
         let deltaHighWord = deltaNum >>> 40
-        hash <- ((hash <<< 2) ^^^ (int)(deltaHighWord &&& 0xFFUL)) &&& 0xFF
-    
-    member this.update(value:double)(valueNum: uint64) =
+        hash <- ((hash <<< 2) ^^^ (int) (deltaHighWord &&& 0xFFUL)) &&& 0xFF
+
+    member this.update (value: double) (valueNum: uint64) =
         let actualDelta = value - prev
         predictTable[hash] <- actualDelta
-        updateHash(actualDelta)
+        updateHash (actualDelta)
         prev <- value
         prevNum <- valueNum
 
@@ -150,7 +151,7 @@ let decompress (data: uint64[]) (count: int) : double[] =
                         let tzByte = r.ReadBits(3)
                         let validByte = r.ReadBits(3)
                         let windowsR = r.ReadBits((int) (validByte * 8UL)) <<< (int ((tzByte * 8UL)))
-                        windowsR ^^^ (BitUtil.d2u result[i - (int)offset])
+                        windowsR ^^^ (BitUtil.d2u result[i - (int) offset])
                     else
                         //考虑预测或者异常
                         let isException = r.ReadBit() = 1

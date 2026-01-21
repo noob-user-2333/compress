@@ -34,7 +34,7 @@ let compressTest
     let data = decompress compressedData compressData.Length
     stopwatch.Stop()
     let decompressTimeMs = stopwatch.ElapsedMilliseconds
-    
+
     for i = 0 to data.Length - 1 do
         if data[i] <> compressData[i] then
             raise (Exception($"压缩算法存在问题,在解压第{i}个数据时出现错误"))
