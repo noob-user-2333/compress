@@ -1,4 +1,4 @@
-module Compress.toolClass
+﻿module Compress.toolClass
 
 open System
 let lowBitMask = 
@@ -62,24 +62,28 @@ type BitWriter() =
 // =======================================================
 
 type BitReader(data: uint64[]) =
-    let data =
-        if data = null || data.Length = 0 then
-            raise (ArgumentException("data"))
-        else
-            data
+    let data = data
     let mutable pos = 0
     let mutable acc = data[0]
     let mutable accPos = 0
+    let mutable isEnd = false
 
     member this.ReadBit() =
+        if isEnd then
+            raise (Exception("所有数据已读取完毕"))
         let ret =int ((acc >>> accPos) &&& 1UL)
         accPos <- accPos + 1
         if accPos = 64 then
             pos <- pos + 1
-            acc <- data[pos]
+            if pos < data.Length then
+                acc <- data[pos]
+            else
+                isEnd <- true
             accPos <- 0
         ret
     member this.ReadBits(n: int) =
+        if isEnd then
+            raise (Exception("所有数据已读取完毕"))
         if n < 1 || n > 64 then
             raise (ArgumentException("Bit count must be between 1 and 64"))
         //需要分别读入两个字
@@ -89,7 +93,10 @@ type BitReader(data: uint64[]) =
                     let highCount = n - lowCount
                     let low = acc >>> accPos
                     pos <- pos + 1
-                    acc <- data[pos]
+                    if pos < data.Length then
+                        acc <- data[pos]
+                    else
+                        isEnd <- true
                     accPos <- highCount
                     let high = (acc &&& lowBitMask[highCount]) <<< lowCount
                     high + low
@@ -98,7 +105,10 @@ type BitReader(data: uint64[]) =
                     accPos <- accPos + n
                     if accPos = 64 then
                         pos <- pos + 1
-                        acc <- data[pos]
+                        if pos < data.Length then
+                            acc <- data[pos]
+                        else
+                            isEnd <- true
                         accPos <- 0
                     v &&& lowBitMask[n]
         result
