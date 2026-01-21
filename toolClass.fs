@@ -33,10 +33,7 @@ type BitWriter() =
         if n + accBits >= 64 then
             let lowCount = 64 - accBits
             let low  = acc + (value <<< accBits)
-            if lowCount = 64 then
-                acc <- 0UL
-            else    
-                acc <- value >>> lowCount
+            acc <- (value >>> lowCount) &&& lowBitMask[accBits]
             accBits <- accBits + n
             accBits <- accBits % 64
             buffer.Add(low)
