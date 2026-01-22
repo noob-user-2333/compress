@@ -23,7 +23,7 @@ type private decodeTableItem =
 //仅需传入用于初始化的频率分布数组
 type tANS(initFreqArray: int array, fieldLen: int) =
     let initArray =
-        if initFreqArray.Length <> (1 <<< fieldLen) || ((fieldLen - 1) &&& fieldLen) <> 0 then
+        if initFreqArray.Length <> (1 <<< fieldLen) then
             raise (ArgumentException("控制字段状态数量必须为2的控制字段bit数次"))
         else
             initFreqArray

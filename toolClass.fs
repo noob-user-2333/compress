@@ -11,40 +11,40 @@ let lowBitMask =
 type BitWriter() =
     let buffer = ResizeArray<uint64>(1024 * 1024)
     let mutable haveToArray = false
-    let mutable accBits = 0
+    let mutable accPos = 0
     let mutable acc = 0UL
-
+    [<Literal>]
+    let accPosMask = 0x3F
     member this.WriteBit(b: int) =
         let v = (uint64)b    
-        let value = (v &&& 1UL)  <<< accBits
+        let value = (v &&& 1UL)  <<< accPos
         acc <- acc ||| value
-        accBits <- accBits + 1
-        if accBits = 64 then
+        accPos <- accPos + 1
+        if accPos = 64 then
             buffer.Add(acc)
             acc <- 0UL
-            accBits <- 0
+            accPos <- 0
 
     member this.WriteBits(v: uint64, n: int) =
         if n < 1 || n > 64 then
             raise (ArgumentException("Bit count must be between 1 and 64"))           
         let value = v &&& lowBitMask[n]
         //需要分别写入两个字
-        if n + accBits >= 64 then
-            let lowCount = 64 - accBits
-            let low  = acc + (value <<< accBits)
-            acc <- (value >>> lowCount) &&& lowBitMask[accBits]
-            accBits <- accBits + n
-            accBits <- accBits % 64
+        //因为value经过处理确保高位为0
+        //故可以直接将value进行处理后和acc或
+        let lowCount = 64 - accPos
+        let low  = acc ||| (value <<< accPos)
+        acc <-  low
+        accPos <- accPos + n
+        if accPos >= 64 then
+            acc <- (value >>> lowCount) &&& lowBitMask[accPos &&& accPosMask]
+            accPos <- accPos  &&& accPosMask
             buffer.Add(low)
-        else
-            let v = (value <<< accBits)
-            acc <- acc + v
-            accBits <- accBits + n
             
         
     member this.ToArray() =
         if haveToArray = false then
-            if accBits > 0 then
+            if accPos > 0 then
                 buffer.Add(acc)
             haveToArray <- true    
             buffer.ToArray()            
@@ -52,7 +52,7 @@ type BitWriter() =
             raise (Exception("单个writer仅能调用一次ToArray"))
     member this.Clear() =
         haveToArray <- false
-        accBits <- 0
+        accPos <- 0
         acc <- 0UL
         buffer.Clear()
 
@@ -64,26 +64,19 @@ type BitWriter() =
 type BitReader(data: uint64[]) =
     let data = data
     let mutable pos = 0
-    let mutable acc = data[0]
+    let mutable acc = 0UL
     let mutable accPos = 0
-    let mutable isEnd = false
+    [<Literal>]
+    let accPosMask = 0x3F
 
     member this.ReadBit() =
-        if isEnd then
-            raise (Exception("所有数据已读取完毕"))
-        let ret =int ((acc >>> accPos) &&& 1UL)
-        accPos <- accPos + 1
-        if accPos = 64 then
+        if accPos = 0 then
+            acc <- data[pos]
             pos <- pos + 1
-            if pos < data.Length then
-                acc <- data[pos]
-            else
-                isEnd <- true
-            accPos <- 0
+        let ret = int ((acc >>> accPos) &&& 1UL)
+        accPos <- (accPos + 1) &&& accPosMask
         ret
     member this.ReadBits(n: int) =
-        if isEnd then
-            raise (Exception("所有数据已读取完毕"))
         if n < 1 || n > 64 then
             raise (ArgumentException("Bit count must be between 1 and 64"))
         //需要分别读入两个字
@@ -92,24 +85,17 @@ type BitReader(data: uint64[]) =
                     let lowCount = 64 - accPos
                     let highCount = n - lowCount
                     let low = acc >>> accPos
+                    acc <- data[pos]
                     pos <- pos + 1
-                    if pos < data.Length then
-                        acc <- data[pos]
-                    else
-                        isEnd <- true
                     accPos <- highCount
                     let high = (acc &&& lowBitMask[highCount]) <<< lowCount
-                    high + low
+                    high ||| low
                 else
-                    let v = (acc >>> accPos)
-                    accPos <- accPos + n
-                    if accPos = 64 then
+                    if accPos = 0 then
+                        acc <- data[pos]
                         pos <- pos + 1
-                        if pos < data.Length then
-                            acc <- data[pos]
-                        else
-                            isEnd <- true
-                        accPos <- 0
+                    let v = (acc >>> accPos)
+                    accPos <- (accPos + n) &&& accPosMask
                     v &&& lowBitMask[n]
         result
 module BitUtil =
