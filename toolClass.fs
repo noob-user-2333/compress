@@ -35,10 +35,10 @@ type BitWriter() =
         let lowCount = 64 - accPos
         let low  = acc ||| (value <<< accPos)
         acc <-  low
-        accPos <- accPos + n
+        accPos <- (accPos + n) 
         if accPos >= 64 then
-            acc <- (value >>> lowCount) &&& lowBitMask[accPos &&& accPosMask]
-            accPos <- accPos  &&& accPosMask
+            accPos <- accPos &&& accPosMask
+            acc <- (value >>> lowCount) &&& lowBitMask[accPos]
             buffer.Add(low)
             
         
