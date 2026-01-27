@@ -5,13 +5,19 @@
         <TargetFramework>net10.0</TargetFramework>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
     <ItemGroup>
         <Compile Include="toolClass.fs"/>
         <Compile Include="Chimp.fs"/>
         <Compile Include="Gorilla.fs"/>
         <Compile Include="AFC.fs"/>
-        <Compile Include="ANSencoder.fs" />
-        <Compile Include="ANSdecoder.fs" />
         <Compile Include="tANS.fs" />
         <Compile Include="HelperFunc.fs"/>
         <Compile Include="Dataset.fs"/>
