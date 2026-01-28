@@ -2,8 +2,6 @@ module Compress.Chimp
 
 open System
 open Compress.toolClass
-open toolClass
-
 // =======================================================
 // Bit Utilities for CHIMP Algorithm
 // =======================================================
@@ -46,7 +44,7 @@ module BitUtil =
 // CHIMP Compression Algorithm
 // =======================================================
 
-let compress (w:BitWriter)(values: double[]) : uint64[] =
+let compress (w: BitWriter) (values: double[]) =
     if values = null || values.Length = 0 then
         raise (ArgumentException("values"))
 

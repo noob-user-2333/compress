@@ -6,11 +6,11 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,8 +18,9 @@
         <Compile Include="Chimp.fs"/>
         <Compile Include="Gorilla.fs"/>
         <Compile Include="AFC.fs"/>
-        <Compile Include="tANS.fs" />
+        <Compile Include="tANS.fs"/>
         <Compile Include="HelperFunc.fs"/>
+        <Compile Include="Huffman.fs" />
         <Compile Include="Dataset.fs"/>
         <Compile Include="Algorithm.fs"/>
         <Compile Include="FASC.fs"/>

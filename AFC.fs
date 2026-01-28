@@ -1,7 +1,6 @@
 module Compress.AFC
 
 open Compress.toolClass
-open toolClass
 
 type PDFCM() =
     let predictTable = Array.zeroCreate (256)
@@ -31,7 +30,7 @@ type PDFCM() =
         let result = highWord + (predictNum &&& lowWordMask)
         result
 
-let compress (w:BitWriter)(values: double[]) : uint64[] =
+let compress (w: BitWriter) (values: double[])  =
     let p = PDFCM()
     let first = BitUtil.d2u values[0]
     p.update values[0] first
