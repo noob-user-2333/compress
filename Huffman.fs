@@ -16,17 +16,13 @@ type private Symbol =
     end
 type private Node =
     struct
-        val index:int
-        val symIndex:int
         val score:int
+        val symIndex:int
+        val index:int
         val lIndex:int
         val rIndex:int
         new (index:int,symIndex:int,score:int,lIndex:int,rIndex:int) = {index=index;symIndex = symIndex;score = score;lIndex = lIndex;rIndex = rIndex}
-        interface IComparer<Node> with
-            member this.Compare (x: Node, y: Node): int =
-                let xValue = (((int64)x.score) <<< 16) + ((int64)x.symIndex)
-                let yValue = (((int64)y.score) <<< 16) + ((int64)y.symIndex)
-                sign(xValue-yValue)
+
     end
 
 
@@ -44,13 +40,9 @@ type Huffman(syms:int array,symLen:int array) =
         |]
     let nodeArray = ResizeArray<Node>()
     //传入符号，映射为symbols的对应索引值
-    let symIndexMap =[|
-            let count = symLen.Max()
-            for i = 0 to count do
-                Dictionary<int,int>()
-        |]
+    let symIndexMap = Array.zeroCreate<int>(syms.Max() + 1)
     //传入符号，映射为哈夫曼编码
-    let symTreeMap = Dictionary<int,Symbol>()
+    let symTreeMap = Array.zeroCreate<Symbol>(syms.Max() + 1)
     
     do
         if syms.Length = 0 || syms.Length <> symLen.Length then
@@ -58,7 +50,7 @@ type Huffman(syms:int array,symLen:int array) =
         for i = 1 to syms.Length - 1 do
             let sym = symbols[i]
             let len = symLen[i]
-            symIndexMap[len].Add(sym.symbol,i)
+            symIndexMap[sym.symbol] <- i
             
     let mutable rootNodeIndex = 0
     let mutable useTree = true
@@ -91,7 +83,7 @@ type Huffman(syms:int array,symLen:int array) =
         if node.symIndex > 0 then
             let sym = symbols[node.symIndex]
             cost <- cost + (sym.len - level) * freqArray[node.symIndex - 1]
-            symTreeMap.Add(sym.symbol,Symbol(prefix,level))
+            symTreeMap[sym.symbol] <- Symbol(prefix,level)
         if node.lIndex > 0 then
             cost <- cost + genHuffmanCodeAndCost freqArray node.lIndex prefix (level + 1)
         if node.rIndex > 0 then
@@ -101,7 +93,7 @@ type Huffman(syms:int array,symLen:int array) =
         rootNodeIndex <- update(nodeArray,freqArray)
         //遍历哈夫曼树确定每个符号编码
         //验证使用哈夫曼编码是否能够节省空间
-        symTreeMap.Clear()
+        Array.Clear symTreeMap
         let nodeIndex = rootNodeIndex
         let cost = genHuffmanCodeAndCost freqArray nodeIndex 0 0
         if cost >= 0 then
@@ -120,7 +112,7 @@ type Huffman(syms:int array,symLen:int array) =
         if useTree = false then
             let mutable num = r.ReadBit()
             let mutable count = 1
-            while symIndexMap[count].ContainsKey(num) = false do
+            while symIndexMap[num] = 0 do
                 num <- (num <<< 1) + r.ReadBit()
                 count <- count + 1
             bitCount <- count    
