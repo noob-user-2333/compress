@@ -49,11 +49,9 @@ type Huffman(syms:int array,symLen:int array) =
             raise (ArgumentException("请确保传入数组不为空且符号数组和符号长度数组的长度一致"))
         for i = 1 to syms.Length - 1 do
             let sym = symbols[i]
-            let len = symLen[i]
             symIndexMap[sym.symbol] <- i
             
     let mutable rootNodeIndex = 0
-    let mutable useTree = true
 
     static let update(nodeArray:ResizeArray<Node>,freqArray:int array) =
         nodeArray.Clear()
@@ -96,28 +94,12 @@ type Huffman(syms:int array,symLen:int array) =
         Array.Clear symTreeMap
         let nodeIndex = rootNodeIndex
         let cost = genHuffmanCodeAndCost freqArray nodeIndex 0 0
-        if cost >= 0 then
-            useTree <- true
-        else
-            useTree <- false
+        cost > 0
     member this.Encode(symbol:int,[<Out>] bitCount:byref<int>)=
-        if useTree = false then
-            bitCount <- 0
-            symbol
-        else
             let sym = symTreeMap[symbol]
             bitCount <- sym.len
             sym.symbol
     member this.Decode(r:BitReader,[<Out>] bitCount:byref<int>) =
-        if useTree = false then
-            let mutable num = r.ReadBit()
-            let mutable count = 1
-            while symIndexMap[num] = 0 do
-                num <- (num <<< 1) + r.ReadBit()
-                count <- count + 1
-            bitCount <- count    
-            num
-        else
             let mutable nodeIndex = rootNodeIndex
             while nodeArray[nodeIndex].symIndex = 0 do
                 let node = nodeArray[nodeIndex] 
