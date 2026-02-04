@@ -19,18 +19,18 @@ let bytesToArraySpan (bytes: byte[]) : 'T[] =
     Span.ToArray()
 
 let compressTest
-    (compress: BitWriter -> double array -> uint64 array)
+    (compress: BitWriter -> double array -> int*uint64 array)
     (decompress: uint64 array -> int -> double array)
     (compressData: double array)
     =
-    let oriSize = compressData.Length * 8
+    let oriSize = compressData.Length * 64
     let w = BitWriter()
     //统计压缩耗时
     let stopwatch = Stopwatch.StartNew()
-    let compressedData = compress w compressData
+    let bitCount,compressedData = compress w compressData
     stopwatch.Stop()
     let compressTimeMs = stopwatch.ElapsedMilliseconds
-    let compressedSize = compressedData.Length * 8
+    let compressedSize = bitCount
     //统计解压耗时
     stopwatch.Restart()
     let data = decompress compressedData compressData.Length

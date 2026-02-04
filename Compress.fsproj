@@ -24,7 +24,9 @@
         <Compile Include="Dataset.fs"/>
         <Compile Include="Algorithm.fs"/>
         <Compile Include="FASC.fs"/>
-        <Compile Include="Program.fs"/>
+        <Compile Include="CompressEval.fs" />
+        <Compile Include="ZeroCountModel.fs" />
+        <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>

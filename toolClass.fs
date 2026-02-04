@@ -149,7 +149,8 @@ type BitReader(data: uint64[]) =
             acc <- data[pos]
             pos <- pos + 1
 
-        let ret = int ((acc >>> accPos) &&& 1UL)
+        let ret = int (acc &&& 1UL)
+        acc <- acc >>> 1
         accPos <- (accPos + 1) &&& accPosMask
         ret
 
@@ -161,20 +162,21 @@ type BitReader(data: uint64[]) =
             if n + accPos > 64 then
                 let lowCount = 64 - accPos
                 let highCount = n - lowCount
-                let low = acc >>> accPos
+                let low = acc 
                 acc <- data[pos]
                 pos <- pos + 1
                 accPos <- highCount
                 let high = (acc &&& lowBitMask[highCount]) <<< lowCount
+                acc <- acc >>> highCount
                 high ||| low
             else
                 if accPos = 0 then
                     acc <- data[pos]
                     pos <- pos + 1
-
-                let v = (acc >>> accPos)
-                accPos <- (accPos + n) &&& accPosMask
-                v &&& lowBitMask[n]
+                let v = (acc &&& lowBitMask[n])
+                acc <- acc >>> n
+                accPos <- (accPos + n) &&& accPosMask 
+                v 
 
         result
 

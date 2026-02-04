@@ -101,13 +101,11 @@ type Huffman(syms:int array,symLen:int array) =
             sym.symbol
     member this.Decode(r:BitReader,[<Out>] bitCount:byref<int>) =
             let mutable nodeIndex = rootNodeIndex
-            while nodeArray[nodeIndex].symIndex = 0 do
-                let node = nodeArray[nodeIndex] 
+            let mutable node = nodeArray[nodeIndex]
+            while node.symIndex = 0 do
                 let bit = r.ReadBit()
-                if bit = 0 then
-                    nodeIndex <- node.lIndex
-                else
-                    nodeIndex <- node.rIndex
-            let sym = symbols[nodeArray[nodeIndex].symIndex]        
+                nodeIndex <- if bit = 0 then node.lIndex else node.rIndex
+                node <- nodeArray[nodeIndex] 
+            let sym = symbols[node.symIndex]        
             bitCount <- sym.len
             sym.symbol
