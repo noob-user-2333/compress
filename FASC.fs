@@ -1,6 +1,5 @@
 module Compress.FASC
 
-open Compress.Algorithm
 open Compress.toolClass
 
 //目标1:从固定的两个算法中选取最优算法作为压缩结果
@@ -10,9 +9,6 @@ open Compress.toolClass
 //
 //当前阶段:开始完成目标1
 
-type Algorithm(index:int,algorithmInterface:IAlgorithm) =
-    
-    let algorithm = algorithmInterface
     
 
 

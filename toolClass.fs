@@ -212,3 +212,6 @@ module BitUtil =
 
     let inline d2u (v: double) = BitConverter.DoubleToUInt64Bits v
     let inline u2d (v: uint64) = BitConverter.UInt64BitsToDouble v
+    let inline extractMSB14 (x: uint64) =
+        let msb14Mask = 0x7FFF000000000000UL // 14位高位掩码
+        (x &&& msb14Mask) >>> (64 - 14) // 右移至最低位，保留14位有效特征

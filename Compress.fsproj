@@ -17,15 +17,17 @@
         <Compile Include="toolClass.fs"/>
         <Compile Include="Chimp.fs"/>
         <Compile Include="Gorilla.fs"/>
+        <Compile Include="Elf.fs" />
         <Compile Include="AFC.fs"/>
         <Compile Include="tANS.fs"/>
         <Compile Include="HelperFunc.fs"/>
         <Compile Include="Huffman.fs" />
         <Compile Include="Dataset.fs"/>
-        <Compile Include="Algorithm.fs"/>
-        <Compile Include="FASC.fs"/>
         <Compile Include="CompressEval.fs" />
         <Compile Include="ZeroCountModel.fs" />
+        <Compile Include="Predictor.fs" />
+        <Compile Include="Encoder.fs" />
+        <Compile Include="FASC.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

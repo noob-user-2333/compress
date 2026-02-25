@@ -23,14 +23,14 @@ let compressTest
     (decompress: uint64 array -> int -> double array)
     (compressData: double array)
     =
-    let oriSize = compressData.Length * 64
+    let oriSize = compressData.Length * 8
     let w = BitWriter()
     //统计压缩耗时
     let stopwatch = Stopwatch.StartNew()
     let bitCount,compressedData = compress w compressData
     stopwatch.Stop()
     let compressTimeMs = stopwatch.ElapsedMilliseconds
-    let compressedSize = bitCount
+    let compressedSize = bitCount / 8
     //统计解压耗时
     stopwatch.Restart()
     let data = decompress compressedData compressData.Length

@@ -2,7 +2,7 @@ module Compress.AFC
 
 open Compress.toolClass
 
-type PDFCM() =
+type private PDFCM() =
     let predictTable = Array.zeroCreate (256)
     let mutable prev = 0.0
     let mutable prevNum = 0UL

@@ -15,30 +15,31 @@ module BitUtil =
 
     let d2u (v: double) = BitConverter.DoubleToUInt64Bits v
     let u2d (v: uint64) = BitConverter.UInt64BitsToDouble v
-
+    let private leadingZerosMap : uint64[] = [|
+        // 0-7: 0UL
+        0UL;0UL;0UL;0UL;0UL;0UL;0UL;0UL;
+        // 8-11: 1UL
+        1UL;1UL;1UL;1UL;
+        // 12-15: 2UL
+        2UL;2UL;2UL;2UL;
+        // 16-17: 3UL
+        3UL;3UL;
+        // 18-19: 4UL
+        4UL;4UL;
+        // 20-21: 5UL
+        5UL;5UL;
+        // 22-23: 6UL
+        6UL;6UL;
+        // 24-64: 7UL（共41个元素：64-24+1=41）
+        yield! Array.create 41 7UL
+    |]
+    let private leadingZerosUnMap  = [|0;8;12;16;18;20;22;24|]
     // CHIMP专用前导零映射函数
     let mapLeadingZeros (lead: int) : uint64 =
-        match lead with
-        | l when l >= 24 -> 7UL // 24+ → 111
-        | l when l >= 22 -> 6UL // 22-23 → 110
-        | l when l >= 20 -> 5UL // 20-21 → 101
-        | l when l >= 18 -> 4UL // 18-19 → 100
-        | l when l >= 16 -> 3UL // 16-17 → 011
-        | l when l >= 12 -> 2UL // 12-15 → 010
-        | l when l >= 8 -> 1UL // 8-11 → 001
-        | _ -> 0UL // 0-7 → 000
+        leadingZerosMap[lead]
 
     let unmapLeadingZeros (mapped: int) : int =
-        match mapped with
-        | 7 -> 24
-        | 6 -> 22
-        | 5 -> 20
-        | 4 -> 18
-        | 3 -> 16
-        | 2 -> 12
-        | 1 -> 8
-        | 0 -> 0
-        | _ -> 0
+        leadingZerosUnMap[mapped]
 
 // =======================================================
 // CHIMP Compression Algorithm

@@ -35,22 +35,21 @@ type ZeroCountModel(bitCount:int,fullBit:int) =
     let dp = Array.zeroCreate<CostEval>((maxNum + 1) * fullNum)
     let costArray = Array.zeroCreate<int>(fullNum)
     let idx(line)(col) =  line*fullNum + col
-    let cost (arr:int array) start finish = arr[finish] - arr[start] - (finish - start) * start
-    let costFuncArray = Array.zeroCreate<int>(fullNum * fullNum)
+    let cost = Array.zeroCreate<int>(fullNum * fullNum)
     member this.BitCount = bitCount    
     member this.Update(freqArray:int array) =
         if freqArray.Length <> fullNum then
             raise (ArgumentException($"请确保数组长度为{fullNum}"))
         let costArray = costArray
-
+        let cost = cost
         //首先计算成本数组    
         for i = 1 to fullNum - 1 do
             costArray[i] <- costArray[i - 1] + freqArray[i] * i
             dp[idx 0 i] <- CostEval(costArray[i],0)
         //预先计算costFunc
         for start = 0 to fullNum - 1 do
-            for final = start to fullNum - 1 do
-                costFuncArray[idx start final] <- cost costArray start final    
+            for finish = start to fullNum - 1 do
+                cost[idx start finish] <- costArray[finish] - costArray[start] - (finish - start) * start
         //开始动态规划
         //control代表代表值或控制位，第0个控制位必须是0
         for control = 1 to maxNum do
@@ -60,7 +59,7 @@ type ZeroCountModel(bitCount:int,fullBit:int) =
                 let mutable minCost = Int32.MaxValue
                 let mutable lastPos = 0
                 for i = 1 to t do
-                    let costbit = dp[idx (control - 1) i].cost + costFuncArray[idx i t]
+                    let costbit = dp[idx (control - 1) i].cost + cost[idx i t]
                     if minCost > costbit then
                         minCost <- costbit
                         lastPos <- i
