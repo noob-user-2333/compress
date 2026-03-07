@@ -28,7 +28,7 @@ let compress (writer: BitWriter) (data: double[]) =
         else
             writer.WriteBit(1) // 第一个控制位表示xor不为0
 
-            let leadingZeros = BitUtil.lz (xor)
+            let leadingZeros = (BitUtil.lz (xor)) &&& 0xFE
             let trailingZeros = BitUtil.tz (xor)
             let significantBits = 64 - leadingZeros - trailingZeros
 
@@ -46,7 +46,7 @@ let compress (writer: BitWriter) (data: double[]) =
                 // 控制位: 11 (新窗口)
                 writer.WriteBit(1)
                 // 写入前导零个数(5 bits)和中心位数(6 bits)
-                writer.WriteBits(uint64 leadingZeros, 5)
+                writer.WriteBits(uint64 (leadingZeros / 2), 5)
                 writer.WriteBits(uint64 (significantBits - 1), 6)
 
                 // 写入有意义的中心位
@@ -94,8 +94,8 @@ let decompress (bytes: uint64[]) (length: int) : double[] =
                     value <<< prevTrailingZeros
                 else
                     // 新窗口 (11)
-                    let leading = int (r.ReadBits 5)
-                    let leadingZeros = if leading < 32 then leading else 31
+                    let leading = (int (r.ReadBits 5))  
+                    let leadingZeros = leading * 2
                     let significantBits = int (r.ReadBits 6) + 1
                     let trailingZeros = 64 - leadingZeros - significantBits
 

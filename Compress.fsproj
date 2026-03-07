@@ -27,7 +27,7 @@
         <Compile Include="ZeroCountModel.fs" />
         <Compile Include="Predictor.fs" />
         <Compile Include="Encoder.fs" />
-        <Compile Include="FASC.fs" />
+        <Compile Include="IAAC.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
