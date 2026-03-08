@@ -23,19 +23,27 @@ let compressTest
     (decompress: uint64 array -> int -> double array)
     (compressData: double array)
     =
+    
+    let noGcSize = 1024 * 1024 * 1024
     let oriSize = compressData.Length * 8
     let w = BitWriter()
+    //预热
+    // ── 预热：让 JIT 编译完所有方法 ──
+    let w1 = BitWriter()
+    let bitCount, testCompressedData1 = compress w1 compressData
+    let _ = decompress testCompressedData1 compressData.Length
     //统计压缩耗时
     let stopwatch = Stopwatch.StartNew()
     let bitCount,compressedData = compress w compressData
     stopwatch.Stop()
     let compressTimeMs = stopwatch.ElapsedMilliseconds
     let compressedSize = bitCount / 8
-    //统计解压耗时
-    stopwatch.Restart()
+    
+    //正式开始解压
+    let stopwatch1 = Stopwatch.StartNew()
     let data = decompress compressedData compressData.Length
-    stopwatch.Stop()
-    let decompressTimeMs = stopwatch.ElapsedMilliseconds
+    stopwatch1.Stop()
+    let decompressTimeMs = stopwatch1.ElapsedMilliseconds
 
     for i = 0 to data.Length - 1 do
         if data[i] <> compressData[i] then

@@ -19,10 +19,10 @@ let bData = File.ReadAllBytes defaultDataFile
 let binaryData = bData[0 .. 1024 * 1024 * 2 - 1]
 let doubleData = bytesToArraySpan<double> binaryData
 let data = doubleData[0..]
-HelperFunc.compressTest AFC.compress AFC.decompress data
-HelperFunc.compressTest Chimp.compress Chimp.decompress data
-HelperFunc.compressTest Gorilla.compress Gorilla.decompress data
+// HelperFunc.compressTest AFC.compress AFC.decompress data
 HelperFunc.compressTest Elf.compress Elf.decompress data
+HelperFunc.compressTest Gorilla.compress Gorilla.decompress data
+HelperFunc.compressTest Chimp.compress Chimp.decompress data
 // let codeArray = [|for i = 0 to 255 do i|]
 // let lenArray = [|for i = 0 to 255 do 8|]
 // let freqArray = Array.zeroCreate<int>(256)
