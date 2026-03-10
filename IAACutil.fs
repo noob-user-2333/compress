@@ -5,7 +5,7 @@ open Compress.Huffman
 open Compress.LUT
 
 [<Literal>]
-let evalThreshold = 1024 * 10
+let evalThreshold = 1024 * 32
 
 [<Literal>]
 let fmin = 1
@@ -64,6 +64,6 @@ let syms = [|
 let symsLen = [|
     for eIndex = 0 to elfControlSym.Length - 1 do
         for index = 0 to controlSym.Length - 1 do
-            elfControlSymLen[eIndex] + (controlSym[index])
+            elfControlSymLen[eIndex] + (controlSymLen[index])
 |]
 let huffman = Huffman(syms,symsLen)

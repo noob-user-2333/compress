@@ -5,7 +5,7 @@ open Compress.ElfUtil
 open Compress.HelperFunc
 
 let defaultDataFile = "/dev/shm/data"
-let dats = Dataset.getCityTemp
+let dats = Dataset.getFoodPrices
 writeArrayToFile defaultDataFile dats
 let bData = File.ReadAllBytes defaultDataFile
 let binaryData = bData[0 .. 1024 * 1024 * 2 - 1]
@@ -14,14 +14,12 @@ let data = doubleData[0..]
 // HelperFunc.compressTest AFC.compress AFC.decompress data
 // HelperFunc.compressTest Gorilla.compress Gorilla.decompress data
 // HelperFunc.compressTest Chimp.compress Chimp.decompress data
-HelperFunc.compressTest IAAC.compress IAAC.decompress data
 HelperFunc.compressTest Elf.compress Elf.decompress data
 zeroLeadModule.Update zeroLeadFreqArray[0..63]
 zeroTrailModule.Update zeroTrailFreqArray[0..63]
-HelperFunc.compressTest IAAC.compress IAAC.decompress data
-HelperFunc.compressTest IAAC.compress IAAC.decompress data
-
 HelperFunc.compressTest Elf.compress Elf.decompress data
+HelperFunc.compressTest IAAC.compress IAAC.decompress data
+HelperFunc.compressTest IAAC.compressNoHuff IAAC.decompressNoHuff data
 // let codeArray = [|for i = 0 to 255 do i|]
 // let lenArray = [|for i = 0 to 255 do 8|]
 // let freqArray = Array.zeroCreate<int>(256)
