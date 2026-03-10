@@ -29,6 +29,7 @@ let compress (writer: BitWriter) (data: double[]) =
              leadModule.Update leadFreqSpan
              trailModule.Update trailFreqSpan
              erasedHuffman.Update(fmin)
+             controlHuffman.Update(fmin)
              Array.Clear leadFreqArray
              Array.Clear trailFreqArray
          //进行预处理
@@ -131,6 +132,7 @@ let decompress (data: uint64[]) (count: int) : double[] =
             leadModule.Update leadFreqSpan
             trailModule.Update trailFreqSpan
             erasedHuffman.Update(fmin)
+            controlHuffman.Update(fmin)
             Array.Clear leadFreqArray
             Array.Clear trailFreqArray
 
