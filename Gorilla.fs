@@ -94,7 +94,7 @@ let decompress (bytes: uint64[]) (length: int) : double[] =
                     value <<< prevTrailingZeros
                 else
                     // 新窗口 (11)
-                    let leading = (int (r.ReadBits 5))  
+                    let leading = (int (r.ReadBits 5))
                     let leadingZeros = leading * 2
                     let significantBits = int (r.ReadBits 6) + 1
                     let trailingZeros = 64 - leadingZeros - significantBits

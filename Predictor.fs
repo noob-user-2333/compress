@@ -4,70 +4,91 @@ open System
 open toolClass
 
 type PredictResult() =
-    
-    let mutable leadingZero = 0 
-    let mutable trailZero = 0 
-    let mutable payloadCount = 0 
+
+    let mutable leadingZero = 0
+    let mutable trailZero = 0
+    let mutable payloadCount = 0
     let mutable payload = 0UL
     let mutable pred = 0UL
-    member this.Set(leading:int,trail:int,_payload:uint64,predNum:uint64) =
+
+    member this.Set(leading: int, trail: int, _payload: uint64, predNum: uint64) =
         leadingZero <- leading
         trailZero <- trail
         payloadCount <- 64 - leading - trail
         payload <- _payload
         pred <- predNum
+
     member this.LeadingZero = leadingZero
     member this.TrailZero = trailZero
     member this.PayloadCount = payloadCount
     member this.Payload = payload
     member this.Pred = pred
+
 type IPredictor =
-    abstract member Update:uint64 -> unit
+    abstract member Update: uint64 -> unit
     //传入当前数值，返回预测残差
     abstract member Predict: unit -> PredictResult
     abstract member Clear: unit -> unit
-    
+
 type LastValue() =
     let mutable last = 0UL
     let result = PredictResult()
-    let leadingFreq = [| for i = 0 to 64 do 0 |]
-    let trailFreq = [|for i = 0 to 64 do 0|]
+
+    let leadingFreq =
+        [| for i = 0 to 64 do
+               0 |]
+
+    let trailFreq =
+        [| for i = 0 to 64 do
+               0 |]
+
     member this.LeadingFreq = leadingFreq
     member this.TrailFreq = trailFreq
+
     interface IPredictor with
-        member this.Update(currentValue):unit =
+        member this.Update(currentValue) : unit =
             let xor = last ^^^ currentValue
             let leading = BitUtil.lz xor
             let trail = BitUtil.tz xor
             leadingFreq[leading] <- leadingFreq[leading] + 1
             trailFreq[trail] <- trailFreq[trail] + 1
-            result.Set(leading,trail,xor,last)
+            result.Set(leading, trail, xor, last)
             last <- currentValue
-            
-        member this.Predict() =
-            result
+
+        member this.Predict() = result
+
         member this.Clear() =
             Array.Clear(leadingFreq)
             Array.Clear(trailFreq)
-            
+
 type PDFCM() =
     let predictTable = Array.zeroCreate 256
     let mutable prev = 0.0
     let mutable prevNum = 0UL
     let mutable hash = 0
+
     [<Literal>]
     let lowWordMask = 0xFFFFFFFFFFFFFUL
+
     [<Literal>]
     let highWordMask = 0xFFF0000000000000UL
-    let leadingFreq = [| for i = 0 to 64 do 0 |]
-    let trailFreq = [|for i = 0 to 64 do 0|]
+
+    let leadingFreq =
+        [| for i = 0 to 64 do
+               0 |]
+
+    let trailFreq =
+        [| for i = 0 to 64 do
+               0 |]
+
     let result = PredictResult()
+
     let updateHash (deltaOfUint64: uint64) =
         let deltaNum = deltaOfUint64
         let deltaHighWord = deltaNum >>> 40
         hash <- ((hash <<< 2) ^^^ (int) (deltaHighWord &&& 0xFFUL)) &&& 0xFF
 
-    let update  (currentValue: uint64) =
+    let update (currentValue: uint64) =
         let value = BitUtil.u2d currentValue
         let actualDelta = value - prev
         predictTable[hash] <- actualDelta
@@ -75,42 +96,49 @@ type PDFCM() =
         prev <- value
         prevNum <- currentValue
 
-    let predict() =
+    let predict () =
         let highWord = prevNum &&& highWordMask
         let predictDelta = predictTable[hash]
         let predict = prev + predictDelta
         let predictNum = BitUtil.d2u predict
         let result = highWord + (predictNum &&& lowWordMask)
         result
+
     member this.LeadingFreq = leadingFreq
     member this.TrailFreq = trailFreq
+
     interface IPredictor with
         member this.Update(currentValue) =
-            update(currentValue)
-            let value = predict()
+            update (currentValue)
+            let value = predict ()
             let xor = value ^^^ currentValue
             let leading = BitUtil.lz xor
             let trail = BitUtil.tz xor
             leadingFreq[leading] <- leadingFreq[leading] + 1
             trailFreq[trail] <- trailFreq[trail] + 1
-            result.Set(leading,trail,xor,value)
-        member this.Predict() =
-            result    
+            result.Set(leading, trail, xor, value)
+
+        member this.Predict() = result
+
         member this.Clear() =
             Array.Clear(leadingFreq)
             Array.Clear(trailFreq)
 // 哈希表行结构：论文指定存储最近两次64位差分（dpred' / dpred''），值类型保证效率
 [<Struct>]
-type HashTableEntry = {
-    mutable DPredPrime: int64  // 最近一次差分 dpred'（64位有符号，用于数值计算）
-    mutable DPredDoublePrime: int64 // 第二次最近差分 dpred''
-}
+type HashTableEntry =
+    { mutable DPredPrime: int64 // 最近一次差分 dpred'（64位有符号，用于数值计算）
+      mutable DPredDoublePrime: int64 } // 第二次最近差分 dpred''
 
 /// 三阶DFCM预测器（论文核心）：参考LastValue类风格实现IPredictor接口
 type DFCM() =
     // 哈希表配置：论文指定2^20行（1,048,576），初始化为0
     let hashTableSize = 1 <<< 20
-    let hashTable = Array.create hashTableSize { DPredPrime = 0L; DPredDoublePrime = 0L }
+
+    let hashTable =
+        Array.create
+            hashTableSize
+            { DPredPrime = 0L
+              DPredDoublePrime = 0L }
     // 三阶差分上下文：存储最近3个64位差分（delta1/delta2/delta3），初始为0（论文指定三阶）
     let mutable delta1 = 0L
     let mutable delta2 = 0L
@@ -120,8 +148,13 @@ type DFCM() =
     // 预测结果实例：与LastValue的result字段完全一致
     let result = PredictResult()
     // 频率统计数组：与LastValue的leadingFreq/trailFreq完全一致（统计XOR的前导/尾随零分布）
-    let leadingFreq = [| for i = 0 to 64 do 0 |]
-    let trailFreq = [| for i = 0 to 64 do 0 |]
+    let leadingFreq =
+        [| for i = 0 to 64 do
+               0 |]
+
+    let trailFreq =
+        [| for i = 0 to 64 do
+               0 |]
     // 哈希函数掩码：20位低位掩码（论文指定截取XOR结果的20位低位作为哈希索引）
     let lsb20Mask = 0x00000000000FFFFFL
 
@@ -189,7 +222,7 @@ type DFCM() =
             leadingFreq[leading] <- leadingFreq[leading] + 1
             trailFreq[trail] <- trailFreq[trail] + 1
             // 步骤6：设置预测结果（与LastValue类的result.Set一致，新增预测值）
-            result.Set(leading, trail, xor,predValue)
+            result.Set(leading, trail, xor, predValue)
             last <- currentValue
             // 步骤7：更新哈希表（用真实差分）
             updateHashTable (delta1, delta2, delta3, realDelta, hashTable)
@@ -199,12 +232,10 @@ type DFCM() =
             delta3 <- realDelta
 
         /// 预测：返回封装好的预测结果，与LastValue类完全一致
-        member this.Predict() =
-            result
+        member this.Predict() = result
 
         /// 清空预测器：重置所有状态，与LastValue类风格一致
         member this.Clear() =
             // 清空频率统计数组（与LastValue类完全一致）
             Array.Clear(leadingFreq)
             Array.Clear(trailFreq)
-            

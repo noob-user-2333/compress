@@ -15,31 +15,48 @@ module BitUtil =
 
     let d2u (v: double) = BitConverter.DoubleToUInt64Bits v
     let u2d (v: uint64) = BitConverter.UInt64BitsToDouble v
-    let leadingZerosMap : uint64[] = [|
-        // 0-7: 0UL
-        0UL;0UL;0UL;0UL;0UL;0UL;0UL;0UL;
-        // 8-11: 1UL
-        1UL;1UL;1UL;1UL;
-        // 12-15: 2UL
-        2UL;2UL;2UL;2UL;
-        // 16-17: 3UL
-        3UL;3UL;
-        // 18-19: 4UL
-        4UL;4UL;
-        // 20-21: 5UL
-        5UL;5UL;
-        // 22-23: 6UL
-        6UL;6UL;
-        // 24-64: 7UL（共41个元素：64-24+1=41）
-        yield! Array.create 41 7UL
-    |]
-    let leadingZerosUnMap  = [|0;8;12;16;18;20;22;24|]
-    // CHIMP专用前导零映射函数
-    let mapLeadingZeros (lead: int) : uint64 =
-        leadingZerosMap[lead]
 
-    let unmapLeadingZeros (mapped: int) : int =
-        leadingZerosUnMap[mapped]
+    let leadingZerosMap: uint64[] =
+        [|
+           // 0-7: 0UL
+           0UL
+           0UL
+           0UL
+           0UL
+           0UL
+           0UL
+           0UL
+           0UL
+           // 8-11: 1UL
+           1UL
+           1UL
+           1UL
+           1UL
+           // 12-15: 2UL
+           2UL
+           2UL
+           2UL
+           2UL
+           // 16-17: 3UL
+           3UL
+           3UL
+           // 18-19: 4UL
+           4UL
+           4UL
+           // 20-21: 5UL
+           5UL
+           5UL
+           // 22-23: 6UL
+           6UL
+           6UL
+           // 24-64: 7UL（共41个元素：64-24+1=41）
+           yield! Array.create 41 7UL |]
+
+    let leadingZerosUnMap = [| 0; 8; 12; 16; 18; 20; 22; 24 |]
+    // CHIMP专用前导零映射函数
+    let mapLeadingZeros (lead: int) : uint64 = leadingZerosMap[lead]
+
+    let unmapLeadingZeros (mapped: int) : int = leadingZerosUnMap[mapped]
 
 // =======================================================
 // CHIMP Compression Algorithm
@@ -71,7 +88,7 @@ let compress (w: BitWriter) (values: double[]) =
 
                 if xorv = 0UL then
                     // 情况1: 与前一个值相同
-                    w.WriteBits(0UL,2)
+                    w.WriteBits(0UL, 2)
                 else
                     // 情况2: 尾随零较多
                     // w.WriteBit(1) // 第二个标志位
@@ -80,26 +97,27 @@ let compress (w: BitWriter) (values: double[]) =
                     let centerBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead)) - trail
                     let control = 2UL ||| (mappedLead <<< 2) ||| (uint64 centerBits <<< 5)
                     // w.WriteBits(uint64 centerBits, 6)
-                    w.WriteBits(control,11)
+                    w.WriteBits(control, 11)
                     let center = (xorv >>> trail)
                     w.WriteBits(center, centerBits)
-            else
+            else if
                 // 情况3: 尾随零较少
                 // w.WriteBit(1) // 第一个标志位
 
-                if mappedLead = prevMappedLead then
-                    // w.WriteBit(0) // 第二个标志位
-                    w.WriteBits(1UL,2)
-                    let significantBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead))
-                    w.WriteBits(xorv, significantBits)
-                else
-                    // w.WriteBit(1) // 第二个标志位
-                    // w.WriteBits(mappedLead, 3)
-                    let control = 3UL ||| (mappedLead <<< 2)
-                    w.WriteBits(control,5)
-                    prevMappedLead <- mappedLead
-                    let significantBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead))
-                    w.WriteBits(xorv, significantBits)
+                mappedLead = prevMappedLead
+            then
+                // w.WriteBit(0) // 第二个标志位
+                w.WriteBits(1UL, 2)
+                let significantBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead))
+                w.WriteBits(xorv, significantBits)
+            else
+                // w.WriteBit(1) // 第二个标志位
+                // w.WriteBits(mappedLead, 3)
+                let control = 3UL ||| (mappedLead <<< 2)
+                w.WriteBits(control, 5)
+                prevMappedLead <- mappedLead
+                let significantBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead))
+                w.WriteBits(xorv, significantBits)
 
         prev <- cur
 

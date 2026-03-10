@@ -1,17 +1,9 @@
 ﻿// For more information see https://aka.ms/fsharp-console-apps
-open System
-open System.Diagnostics
 open System.IO
-open System.Linq
-open System.Runtime.InteropServices
 open Compress
+open Compress.ElfUtil
 open Compress.HelperFunc
-open Compress.Huffman
-open Compress.Predictor
-open Compress.ZeroCountModel
-open Compress.tANS
-open Compress.toolClass
-open Compress.Elf
+
 let defaultDataFile = "/dev/shm/data"
 let dats = Dataset.getCityTemp
 writeArrayToFile defaultDataFile dats
@@ -20,9 +12,16 @@ let binaryData = bData[0 .. 1024 * 1024 * 2 - 1]
 let doubleData = bytesToArraySpan<double> binaryData
 let data = doubleData[0..]
 // HelperFunc.compressTest AFC.compress AFC.decompress data
+// HelperFunc.compressTest Gorilla.compress Gorilla.decompress data
+// HelperFunc.compressTest Chimp.compress Chimp.decompress data
+HelperFunc.compressTest IAAC.compress IAAC.decompress data
 HelperFunc.compressTest Elf.compress Elf.decompress data
-HelperFunc.compressTest Gorilla.compress Gorilla.decompress data
-HelperFunc.compressTest Chimp.compress Chimp.decompress data
+zeroLeadModule.Update zeroLeadFreqArray[0..63]
+zeroTrailModule.Update zeroTrailFreqArray[0..63]
+HelperFunc.compressTest IAAC.compress IAAC.decompress data
+HelperFunc.compressTest IAAC.compress IAAC.decompress data
+
+HelperFunc.compressTest Elf.compress Elf.decompress data
 // let codeArray = [|for i = 0 to 255 do i|]
 // let lenArray = [|for i = 0 to 255 do 8|]
 // let freqArray = Array.zeroCreate<int>(256)

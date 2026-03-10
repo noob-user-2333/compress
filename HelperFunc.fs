@@ -19,14 +19,15 @@ let bytesToArraySpan (bytes: byte[]) : 'T[] =
     Span.ToArray()
 
 let compressTest
-    (compress: BitWriter -> double array -> int*uint64 array)
+    (compress: BitWriter -> double array -> int * uint64 array)
     (decompress: uint64 array -> int -> double array)
     (compressData: double array)
     =
-    
+
     let noGcSize = 1024 * 1024 * 1024
     let oriSize = compressData.Length * 8
     let w = BitWriter()
+
     //预热
     // ── 预热：让 JIT 编译完所有方法 ──
     let w1 = BitWriter()
@@ -34,11 +35,11 @@ let compressTest
     let _ = decompress testCompressedData1 compressData.Length
     //统计压缩耗时
     let stopwatch = Stopwatch.StartNew()
-    let bitCount,compressedData = compress w compressData
+    let bitCount, compressedData = compress w compressData
     stopwatch.Stop()
     let compressTimeMs = stopwatch.ElapsedMilliseconds
     let compressedSize = bitCount / 8
-    
+
     //正式开始解压
     let stopwatch1 = Stopwatch.StartNew()
     let data = decompress compressedData compressData.Length

@@ -30,7 +30,7 @@ type private PDFCM() =
         let result = highWord + (predictNum &&& lowWordMask)
         result
 
-let compress (w: BitWriter) (values: double[])  =
+let compress (w: BitWriter) (values: double[]) =
     let p = PDFCM()
     let first = BitUtil.d2u values[0]
     p.update values[0] first

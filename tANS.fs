@@ -160,6 +160,7 @@ type tANS(freqArray: int array, fieldLen: int) =
     member this.Decode(r: BitReaderFromEnd) =
         if dStatus = 0 then
             dStatus <- eStatus - spreadArray.Length
+
         let sym = decoder.Decode(dStatus, r, &dStatus)
         sym
 

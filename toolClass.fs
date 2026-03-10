@@ -162,7 +162,7 @@ type BitReader(data: uint64[]) =
             if n + accPos > 64 then
                 let lowCount = 64 - accPos
                 let highCount = n - lowCount
-                let low = acc 
+                let low = acc
                 acc <- data[pos]
                 pos <- pos + 1
                 accPos <- highCount
@@ -173,10 +173,11 @@ type BitReader(data: uint64[]) =
                 if accPos = 0 then
                     acc <- data[pos]
                     pos <- pos + 1
+
                 let v = (acc &&& lowBitMask[n])
                 acc <- acc >>> n
-                accPos <- (accPos + n) &&& accPosMask 
-                v 
+                accPos <- (accPos + n) &&& accPosMask
+                v
 
         result
 
@@ -191,6 +192,7 @@ type BitReaderFromEnd(data: uint64[], bitCount: int) =
         pos <- pos - n
         let offset = pos / 64
         let bitOffset = pos % 64
+
         let result =
             if n + bitOffset > 64 then
                 let lowCount = 64 - bitOffset
@@ -201,6 +203,7 @@ type BitReaderFromEnd(data: uint64[], bitCount: int) =
             else
                 let v = (data[offset] >>> bitOffset)
                 v &&& lowBitMask[n]
+
         result
 
 module BitUtil =
@@ -212,6 +215,7 @@ module BitUtil =
 
     let inline d2u (v: double) = BitConverter.DoubleToUInt64Bits v
     let inline u2d (v: uint64) = BitConverter.UInt64BitsToDouble v
+
     let inline extractMSB14 (x: uint64) =
         let msb14Mask = 0x7FFF000000000000UL // 14位高位掩码
         (x &&& msb14Mask) >>> (64 - 14) // 右移至最低位，保留14位有效特征

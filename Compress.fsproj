@@ -15,23 +15,25 @@
 
     <ItemGroup>
         <Compile Include="toolClass.fs"/>
+        <Compile Include="ZeroCountModel.fs"/>
+        <Compile Include="LUT.fs"/>
         <Compile Include="Chimp.fs"/>
         <Compile Include="Gorilla.fs"/>
-        <Compile Include="Elf.fs" />
+        <Compile Include="ElfUtil.fs"/>
+        <Compile Include="Elf.fs"/>
         <Compile Include="AFC.fs"/>
         <Compile Include="tANS.fs"/>
         <Compile Include="HelperFunc.fs"/>
-        <Compile Include="Huffman.fs" />
+        <Compile Include="Huffman.fs"/>
         <Compile Include="Dataset.fs"/>
-        <Compile Include="CompressEval.fs" />
-        <Compile Include="ZeroCountModel.fs" />
-        <Compile Include="Predictor.fs" />
-        <Compile Include="Encoder.fs" />
-        <Compile Include="IAAC.fs" />
-        <Compile Include="Program.fs" />
+        <Compile Include="Predictor.fs"/>
+        <Compile Include="IAACutil.fs" />
+        <Compile Include="IAAC.fs"/>
+        <Compile Include="Program.fs"/>
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" Version="0.15.8"/>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.1"/>
     </ItemGroup>
 
