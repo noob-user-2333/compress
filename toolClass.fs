@@ -189,31 +189,25 @@ type BitReader(data: uint64[]) =
                 v
 
         result
-
-type BitReaderFromEnd(data: uint64[], bitCount: int) =
-    let data = data
-    let mutable pos = bitCount
-
-    member this.ReadBits(n: int) =
-        if n < 1 || n > 64 then
-            raise (ArgumentException("Bit count must be between 1 and 64"))
-        //需要分别读入两个字
-        pos <- pos - n
-        let offset = pos / 64
-        let bitOffset = pos % 64
-
-        let result =
-            if n + bitOffset > 64 then
-                let lowCount = 64 - bitOffset
-                let highCount = n - lowCount
-                let low = data[offset] >>> bitOffset
-                let high = (data[offset + 1] &&& lowBitMask[highCount]) <<< lowCount
-                high ||| low
+    member this.UnreadBits(n: int) =
+        if n > 0 then
+            let globalPos =
+                if accPos = 0 then pos * 64
+                else (pos - 1) * 64 + accPos
+    
+            let newPos = globalPos - n
+            let wordIndex = newPos / 64
+            let bitOffset = newPos % 64
+    
+            if bitOffset = 0 then
+                pos <- wordIndex
+                acc <- 0UL
+                accPos <- 0
             else
-                let v = (data[offset] >>> bitOffset)
-                v &&& lowBitMask[n]
-
-        result
+                pos <- wordIndex + 1
+                acc <- data[wordIndex] >>> bitOffset
+                accPos <- bitOffset
+    
 
 module BitUtil =
     let inline lz (x: uint64) =

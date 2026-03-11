@@ -3,6 +3,7 @@ module Compress.HelperFunc
 open System
 open System.Diagnostics
 open System.IO
+open System.Runtime
 open System.Runtime.InteropServices
 open FSharp.NativeInterop
 open Compress.toolClass
@@ -32,6 +33,7 @@ let compressTest
     let oriSize = doubleCount * 8
     Marshal.Copy(compressData,0, NativePtr.toNativeInt(NativePtr.ofVoidPtr<byte> ptr),doubleCount)
     let ptrBuffer = PtrBuffer(ptr,doubleCount)
+    let reserverMemory = 256*1024 * 1024
     //预热
     // ── 预热：让 JIT 编译完所有方法 ──
     for _ = 1 to 3 do
@@ -41,17 +43,33 @@ let compressTest
         let _ = algorithm.Decompress (r1,doubleCount)
         ignore |> ignore
     //统计压缩耗时
+    GCSettings.LargeObjectHeapCompactionMode <- GCLargeObjectHeapCompactionMode.CompactOnce
+    GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true)
+    GC.WaitForPendingFinalizers()
+    GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true)
+    // 2. 预留 16GB，关闭 GC
+    if not (GC.TryStartNoGCRegion(reserverMemory)) then
+        printfn "NoGCRegion 启动失败，内存不足"
     let stopwatch = Stopwatch.StartNew()
     let struct(bitCount,compressedData) = algorithm.Compress (w,ptrBuffer)
     stopwatch.Stop()
+    GC.EndNoGCRegion()
     let compressTimeMs = stopwatch.ElapsedMilliseconds
     let compressedSize = bitCount / 8
 
     //正式开始解压
     let r = BitReader(compressedData)
+    GCSettings.LargeObjectHeapCompactionMode <- GCLargeObjectHeapCompactionMode.CompactOnce
+    GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true)
+    GC.WaitForPendingFinalizers()
+    GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true)
+    // 2. 预留 16GB，关闭 GC
+    if not (GC.TryStartNoGCRegion(reserverMemory)) then
+        printfn "NoGCRegion 启动失败，内存不足"
     let stopwatch1 = Stopwatch.StartNew()
     let data = algorithm.Decompress (r,doubleCount)
     stopwatch1.Stop()
+    GC.EndNoGCRegion()
     let decompressTimeMs = stopwatch1.ElapsedMilliseconds
     
     for i = 0 to data.Length - 1 do
