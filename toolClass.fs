@@ -1,7 +1,16 @@
 ﻿module Compress.toolClass
 
 open System
+open System.Collections.Generic
+open Microsoft.FSharp.NativeInterop
 
+type PtrBuffer = 
+    val Addr: nativeint
+    val Length: int
+    new(p: voidptr, len: int) = {  Addr =  NativePtr.toNativeInt(NativePtr.ofVoidPtr<byte>(p)); Length = len }
+    member this.AsSpan()  =
+        // this.Addr.AsReadOnly()
+        ReadOnlySpan<double>(NativePtr.toVoidPtr (NativePtr.ofNativeInt<double> this.Addr), this.Length)
 let lowBitMask =
     [| 0UL
        1UL
@@ -120,7 +129,7 @@ type BitWriter() =
                 buffer.Add(acc)
 
             haveToArray <- true
-            (pos + accPos, buffer.ToArray())
+            struct(pos + accPos, buffer.ToArray())
         else
             raise (Exception("单个writer仅能调用一次ToArray"))
 
@@ -219,3 +228,8 @@ module BitUtil =
     let inline extractMSB14 (x: uint64) =
         let msb14Mask = 0x7FFF000000000000UL // 14位高位掩码
         (x &&& msb14Mask) >>> (64 - 14) // 右移至最低位，保留14位有效特征
+[<Interface>]
+type ICompressor =
+    abstract member Compress: BitWriter * PtrBuffer ->  struct(int*uint64 array)
+    abstract member Decompress: BitReader * int -> double array
+    abstract member GetName: unit -> string

@@ -38,6 +38,7 @@ let private getFAlpha (alpha: int) =
 
 let private getSignificantCount (v: float) (sp: int) : int =
     let mutable i = if sp >= 0 then 1 else -sp
+    
     let mutable temp = v * pow10[i]
     // (long)temp == temp 等价于 truncate temp = temp
     // 即 temp 没有小数部分
@@ -60,9 +61,12 @@ let private getAlphaAndBetaStar (v: float) : struct (int * int) =
     struct (alpha, betaStar)
 
 let eraseTrailZero (v: float) =
-    let struct (alpha, betaStar) = getAlphaAndBetaStar v
     let vLong = BitUtil.d2u v
     let e = ((vLong >>> 52)) &&& 0x7FFUL
+    if v = 0.0 || Double.IsNaN(v) || Double.IsInfinity(v) || e = 0UL then
+        struct (false, 0, vLong)
+    else    
+    let struct (alpha, betaStar) = getAlphaAndBetaStar v
     let fAlpha = getFAlpha alpha
     let gAlpha = (uint64 fAlpha) + e - 1023UL
     let eraseBits = 52UL - gAlpha

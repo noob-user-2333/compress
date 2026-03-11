@@ -1,25 +1,39 @@
 ﻿// For more information see https://aka.ms/fsharp-console-apps
+open System
+open System.Diagnostics
 open System.IO
 open Compress
+open Compress.AFC
+open Compress.Chimp
+open Compress.Elf
 open Compress.ElfUtil
+open Compress.Gorilla
 open Compress.HelperFunc
+open Compress.IAAC
+open Compress.toolClass
 
 let defaultDataFile = "/dev/shm/data"
-let dats = Dataset.getFoodPrices
+let dats = Dataset.getCityTemp
 writeArrayToFile defaultDataFile dats
 let bData = File.ReadAllBytes defaultDataFile
-let binaryData = bData[0 .. 1024 * 1024 * 2 - 1]
+let binaryData = bData
 let doubleData = bytesToArraySpan<double> binaryData
-let data = doubleData[0..]
-// HelperFunc.compressTest AFC.compress AFC.decompress data
-// HelperFunc.compressTest Gorilla.compress Gorilla.decompress data
-// HelperFunc.compressTest Chimp.compress Chimp.decompress data
-HelperFunc.compressTest Elf.compress Elf.decompress data
+let data = doubleData
+let iaac = IAAC()
+let compressors:ICompressor array = [|Gorilla();Chimp();AFC();Elf()|]
+for c in compressors do
+    compressTest c data
 zeroLeadModule.Update zeroLeadFreqArray[0..63]
 zeroTrailModule.Update zeroTrailFreqArray[0..63]
-HelperFunc.compressTest Elf.compress Elf.decompress data
-HelperFunc.compressTest IAAC.compress IAAC.decompress data
-HelperFunc.compressTest IAAC.compressNoHuff IAAC.decompressNoHuff data
+compressTest iaac data
+
+// HelperFunc.compressTest Elf.compress Elf.decompress data
+
+// HelperFunc.compressTest Elf.compress Elf.decompress data
+// HelperFunc.compressTest IAAC.compress IAAC.decompress data
+// HelperFunc.compressTest IAAC.compress IAAC.decompress data
+// HelperFunc.compressTest IAAC.compressNoHuff IAAC.decompressNoHuff data
+// HelperFunc.compressTest IAAC.compressNoHuff IAAC.decompressNoHuff data
 // let codeArray = [|for i = 0 to 255 do i|]
 // let lenArray = [|for i = 0 to 255 do 8|]
 // let freqArray = Array.zeroCreate<int>(256)

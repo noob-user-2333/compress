@@ -61,124 +61,121 @@ module BitUtil =
 // =======================================================
 // CHIMP Compression Algorithm
 // =======================================================
-
-let compress (w: BitWriter) (values: double[]) =
-    if values = null || values.Length = 0 then
-        raise (ArgumentException("values"))
-
-    let mutable prev = 0UL
-    let mutable prevMappedLead = 0UL
-
-    for i = 0 to values.Length - 1 do
-        let cur = BitUtil.d2u values[i]
-
-        if i = 0 then
-            // 第一个值直接存储64位
-            w.WriteBits(cur, 64)
-            let lead = BitUtil.lz cur
-            prevMappedLead <- BitUtil.mapLeadingZeros (lead)
-        else
-            let xorv = cur ^^^ prev
-            let lead = BitUtil.lz xorv
-            let trail = BitUtil.tz xorv
-            let mappedLead = BitUtil.mapLeadingZeros lead
-
-            if trail > 6 then
-                // w.WriteBit(0) // 第一个标志位
-
-                if xorv = 0UL then
-                    // 情况1: 与前一个值相同
-                    w.WriteBits(0UL, 2)
-                else
-                    // 情况2: 尾随零较多
-                    // w.WriteBit(1) // 第二个标志位
-                    // w.WriteBits(mappedLead, 3)
-                    prevMappedLead <- mappedLead
-                    let centerBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead)) - trail
-                    let control = 2UL ||| (mappedLead <<< 2) ||| (uint64 centerBits <<< 5)
-                    // w.WriteBits(uint64 centerBits, 6)
-                    w.WriteBits(control, 11)
-                    let center = (xorv >>> trail)
-                    w.WriteBits(center, centerBits)
-            else if
-                // 情况3: 尾随零较少
-                // w.WriteBit(1) // 第一个标志位
-
-                mappedLead = prevMappedLead
-            then
-                // w.WriteBit(0) // 第二个标志位
-                w.WriteBits(1UL, 2)
-                let significantBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead))
-                w.WriteBits(xorv, significantBits)
-            else
-                // w.WriteBit(1) // 第二个标志位
-                // w.WriteBits(mappedLead, 3)
-                let control = 3UL ||| (mappedLead <<< 2)
-                w.WriteBits(control, 5)
-                prevMappedLead <- mappedLead
-                let significantBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead))
-                w.WriteBits(xorv, significantBits)
-
-        prev <- cur
-
-    w.ToArray()
-
-// =======================================================
-// CHIMP Decompression Algorithm
-// =======================================================
-
-let decompress (data: uint64[]) (count: int) : double[] =
-    if data = null || data.Length = 0 then
-        raise (ArgumentException("Compressed data cannot be null or empty"))
-
-    if count <= 0 then
-        raise (ArgumentException("Count must be positive"))
-
-    let r = BitReader(data)
-    let output = Array.zeroCreate<double> count
-    let mutable prev = 0UL
-    let mutable prevMappedLeadNum = 0
-
-    try
-        for i = 0 to count - 1 do
-            let cur =
+type Chimp() =
+    interface ICompressor with
+        member _.GetName() =
+            "Chimp"
+        member _.Compress (w,ptrBuffer) =
+            let mutable prev = 0UL
+            let mutable prevMappedLead = 0UL
+            let values = ptrBuffer.AsSpan()
+            for i = 0 to values.Length - 1 do
+                let cur = BitUtil.d2u values[i]
+        
                 if i = 0 then
-                    r.ReadBits(64)
+                    // 第一个值直接存储64位
+                    w.WriteBits(cur, 64)
+                    let lead = BitUtil.lz cur
+                    prevMappedLead <- BitUtil.mapLeadingZeros (lead)
                 else
-                    let firstFlag = r.ReadBit()
-                    let secondFlag = r.ReadBit()
-                    // Console.WriteLine($"{firstFlag} {secondFlag}")
-                    if firstFlag = 0 then
-                        if secondFlag = 0 then
-                            prev
+                    let xorv = cur ^^^ prev
+                    let lead = BitUtil.lz xorv
+                    let trail = BitUtil.tz xorv
+                    let mappedLead = BitUtil.mapLeadingZeros lead
+        
+                    if trail > 6 then
+                        // w.WriteBit(0) // 第一个标志位
+        
+                        if xorv = 0UL then
+                            // 情况1: 与前一个值相同
+                            w.WriteBits(0UL, 2)
                         else
-                            let leadNum = (int) (r.ReadBits(3))
-                            let lead = BitUtil.unmapLeadingZeros (leadNum)
-                            prevMappedLeadNum <- leadNum
-                            let valid = (int) (r.ReadBits(6))
-                            let trail = 64 - valid - lead
-                            let xorv = r.ReadBits(valid)
-                            let value = xorv <<< trail
-                            value ^^^ prev
-                    else if secondFlag = 0 then
-                        let lead = BitUtil.unmapLeadingZeros (prevMappedLeadNum)
-                        let valid = 64 - lead
-                        let xorv = r.ReadBits(valid)
-                        let value = xorv
-                        value ^^^ prev
+                            // 情况2: 尾随零较多
+                            // w.WriteBit(1) // 第二个标志位
+                            // w.WriteBits(mappedLead, 3)
+                            prevMappedLead <- mappedLead
+                            let centerBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead)) - trail
+                            let control = 2UL ||| (mappedLead <<< 2) ||| (uint64 centerBits <<< 5)
+                            // w.WriteBits(uint64 centerBits, 6)
+                            w.WriteBits(control, 11)
+                            let center = (xorv >>> trail)
+                            w.WriteBits(center, centerBits)
+                    else if
+                        // 情况3: 尾随零较少
+                        // w.WriteBit(1) // 第一个标志位
+        
+                        mappedLead = prevMappedLead
+                    then
+                        // w.WriteBit(0) // 第二个标志位
+                        w.WriteBits(1UL, 2)
+                        let significantBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead))
+                        w.WriteBits(xorv, significantBits)
                     else
-                        let leadNum = (int) (r.ReadBits(3))
-                        prevMappedLeadNum <- leadNum
-                        let lead = BitUtil.unmapLeadingZeros (leadNum)
-                        let valid = 64 - lead
-                        let xorv = r.ReadBits(valid)
-                        let value = xorv
-                        value ^^^ prev
-
-            prev <- cur
-            output[i] <- BitUtil.u2d cur
-
-        output
-    with ex ->
-        printfn "Decompression error: %s" ex.Message
-        reraise ()
+                        // w.WriteBit(1) // 第二个标志位
+                        // w.WriteBits(mappedLead, 3)
+                        let control = 3UL ||| (mappedLead <<< 2)
+                        w.WriteBits(control, 5)
+                        prevMappedLead <- mappedLead
+                        let significantBits = 64 - (BitUtil.unmapLeadingZeros (int mappedLead))
+                        w.WriteBits(xorv, significantBits)
+        
+                prev <- cur
+        
+            w.ToArray()
+        
+        // =======================================================
+        // CHIMP Decompression Algorithm
+        // =======================================================
+        
+        member this.Decompress (r:BitReader,count: int) : double[] =
+            if count <= 0 then
+                raise (ArgumentException("Count must be positive"))
+        
+            let output = Array.zeroCreate<double> count
+            let mutable prev = 0UL
+            let mutable prevMappedLeadNum = 0
+        
+            try
+                for i = 0 to count - 1 do
+                    let cur =
+                        if i = 0 then
+                            r.ReadBits(64)
+                        else
+                            let firstFlag = r.ReadBit()
+                            let secondFlag = r.ReadBit()
+                            // Console.WriteLine($"{firstFlag} {secondFlag}")
+                            if firstFlag = 0 then
+                                if secondFlag = 0 then
+                                    prev
+                                else
+                                    let leadNum = (int) (r.ReadBits(3))
+                                    let lead = BitUtil.unmapLeadingZeros (leadNum)
+                                    prevMappedLeadNum <- leadNum
+                                    let valid = (int) (r.ReadBits(6))
+                                    let trail = 64 - valid - lead
+                                    let xorv = r.ReadBits(valid)
+                                    let value = xorv <<< trail
+                                    value ^^^ prev
+                            else if secondFlag = 0 then
+                                let lead = BitUtil.unmapLeadingZeros (prevMappedLeadNum)
+                                let valid = 64 - lead
+                                let xorv = r.ReadBits(valid)
+                                let value = xorv
+                                value ^^^ prev
+                            else
+                                let leadNum = (int) (r.ReadBits(3))
+                                prevMappedLeadNum <- leadNum
+                                let lead = BitUtil.unmapLeadingZeros (leadNum)
+                                let valid = 64 - lead
+                                let xorv = r.ReadBits(valid)
+                                let value = xorv
+                                value ^^^ prev
+        
+                    prev <- cur
+                    output[i] <- BitUtil.u2d cur
+        
+                output
+            with ex ->
+                printfn "Decompression error: %s" ex.Message
+                reraise ()
+        

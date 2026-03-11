@@ -29,6 +29,7 @@
         <Compile Include="Predictor.fs"/>
         <Compile Include="IAACutil.fs" />
         <Compile Include="IAAC.fs"/>
+        <Compile Include="IAACNoHuff.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
 

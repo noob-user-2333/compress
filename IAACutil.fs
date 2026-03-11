@@ -5,7 +5,7 @@ open Compress.Huffman
 open Compress.LUT
 
 [<Literal>]
-let evalThreshold = 1024 * 32
+let evalThreshold = 1024 * 8
 
 [<Literal>]
 let fmin = 1

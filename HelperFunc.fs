@@ -4,7 +4,11 @@ open System
 open System.Diagnostics
 open System.IO
 open System.Runtime.InteropServices
+open FSharp.NativeInterop
 open Compress.toolClass
+open System.Runtime.InteropServices
+open System.Runtime.InteropServices.Marshalling
+open FSharp.NativeInterop
 
 let writeArrayToFile (filePath: string) (data: double array) =
     use writer = new BinaryWriter(File.Open(filePath, FileMode.Create))
@@ -19,37 +23,43 @@ let bytesToArraySpan (bytes: byte[]) : 'T[] =
     Span.ToArray()
 
 let compressTest
-    (compress: BitWriter -> double array -> int * uint64 array)
-    (decompress: uint64 array -> int -> double array)
+    (algorithm:ICompressor)
     (compressData: double array)
     =
-
-    let noGcSize = 1024 * 1024 * 1024
-    let oriSize = compressData.Length * 8
     let w = BitWriter()
-
+    let doubleCount = compressData.Length &&& (~~~7)
+    let ptr = NativeMemory.AlignedAlloc(unativeint (doubleCount * sizeof<double>),unativeint 64)
+    let oriSize = doubleCount * 8
+    Marshal.Copy(compressData,0, NativePtr.toNativeInt(NativePtr.ofVoidPtr<byte> ptr),doubleCount)
+    let ptrBuffer = PtrBuffer(ptr,doubleCount)
     //预热
     // ── 预热：让 JIT 编译完所有方法 ──
-    let w1 = BitWriter()
-    let bitCount, testCompressedData1 = compress w1 compressData
-    let _ = decompress testCompressedData1 compressData.Length
+    for _ = 1 to 3 do
+        let w1 = BitWriter()
+        let struct(bitCount1,testCompressedData1) = algorithm.Compress (w1,ptrBuffer)
+        let r1 = BitReader(testCompressedData1)
+        let _ = algorithm.Decompress (r1,doubleCount)
+        ignore |> ignore
     //统计压缩耗时
     let stopwatch = Stopwatch.StartNew()
-    let bitCount, compressedData = compress w compressData
+    let struct(bitCount,compressedData) = algorithm.Compress (w,ptrBuffer)
     stopwatch.Stop()
     let compressTimeMs = stopwatch.ElapsedMilliseconds
     let compressedSize = bitCount / 8
 
     //正式开始解压
+    let r = BitReader(compressedData)
     let stopwatch1 = Stopwatch.StartNew()
-    let data = decompress compressedData compressData.Length
+    let data = algorithm.Decompress (r,doubleCount)
     stopwatch1.Stop()
     let decompressTimeMs = stopwatch1.ElapsedMilliseconds
-
+    
     for i = 0 to data.Length - 1 do
         if data[i] <> compressData[i] then
             raise (Exception($"压缩算法存在问题,在解压第{i}个数据时出现错误"))
-
+    
+    NativeMemory.AlignedFree(ptr)
+    Console.WriteLine($"算法:{algorithm.GetName()}")
     Console.WriteLine($"共压缩{compressData.Length}个数据点")
     Console.WriteLine($"初始数据大小为{oriSize},压缩后大小为{compressedSize}")
     Console.WriteLine($"压缩率为{(double) (compressedSize) / (double) oriSize}")
